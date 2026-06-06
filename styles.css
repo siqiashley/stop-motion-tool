@@ -364,6 +364,10 @@ input[type="range"] {
   text-align: center;
 }
 
+.repeat-ticks {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .toggle-line {
   display: flex;
   align-items: center;

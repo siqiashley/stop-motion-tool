@@ -14,6 +14,9 @@ const backgroundSwatch = document.querySelector("#backgroundSwatch");
 const backgroundHex = document.querySelector("#backgroundHex");
 const customColorLine = document.querySelector("#customColorLine");
 const customColorInput = document.querySelector("#customColorInput");
+const repeatControl = document.querySelector("#repeatControl");
+const repeatInput = document.querySelector("#repeatInput");
+const repeatValue = document.querySelector("#repeatValue");
 const qualityInput = document.querySelector("#qualityInput");
 const qualityLabel = document.querySelector("#qualityLabel");
 const exportButton = document.querySelector("#exportButton");
@@ -91,13 +94,27 @@ function updateBackgroundUi() {
   backgroundHex.textContent = color;
 }
 
+function getRepeatCount() {
+  return Number(repeatInput.value) || 1;
+}
+
+function getImageSequenceDuration() {
+  return (imageFiles.length * getRepeatCount()) / Number(fpsInput.value);
+}
+
+function updateImageDurationPreview() {
+  if (sourceKind === "images") {
+    updateProgress(0, getImageSequenceDuration());
+  }
+}
+
 async function redrawImagePreview() {
   if (sourceKind !== "images" || !imageUrls.length || isRendering) return;
   resetDownload();
   const image = await loadImage(imageUrls[0]);
   setCanvasSize(image.naturalWidth, image.naturalHeight);
   drawContainImage(image);
-  updateProgress(0, imageFiles.length / Number(fpsInput.value));
+  updateImageDurationPreview();
 }
 
 function showCanvasPreview() {
@@ -222,6 +239,7 @@ function selectMode(mode) {
   if (mode === "images") {
     modeTitle.textContent = "照片变 Stop Motion";
     backgroundControl.classList.remove("hidden");
+    repeatControl.classList.remove("hidden");
     updateBackgroundUi();
     videoInput.accept = "image/*";
     videoInput.multiple = true;
@@ -231,6 +249,7 @@ function selectMode(mode) {
   } else {
     modeTitle.textContent = "视频变 Stop Motion";
     backgroundControl.classList.add("hidden");
+    repeatControl.classList.add("hidden");
     videoInput.accept = "video/*";
     videoInput.multiple = false;
     fileText.textContent = "选择视频";
@@ -340,7 +359,7 @@ function loadImageSequence(files) {
   firstImage.onload = () => {
     setCanvasSize(firstImage.naturalWidth, firstImage.naturalHeight);
     drawContainImage(firstImage);
-    updateProgress(0, files.length / Number(fpsInput.value));
+    updateImageDurationPreview();
     updateExportAvailability();
     setStatus(canExportMp4() ? "可以生成" : "当前浏览器不支持 MP4 导出");
   };
@@ -534,7 +553,9 @@ async function renderStopMotion() {
 
 async function renderImageSequence(targetFps, videoBitsPerSecond, chunks) {
   const frameDurationMs = 1000 / targetFps;
-  const duration = imageUrls.length / targetFps;
+  const repeatCount = getRepeatCount();
+  const totalFrames = imageUrls.length * repeatCount;
+  const duration = totalFrames / targetFps;
   const firstImage = await loadImage(imageUrls[0]);
   setCanvasSize(firstImage.naturalWidth, firstImage.naturalHeight);
   drawContainImage(firstImage);
@@ -554,14 +575,18 @@ async function renderImageSequence(targetFps, videoBitsPerSecond, chunks) {
   setStatus("生成中");
   recorder.start(250);
 
-  for (let index = 0; index < imageUrls.length; index += 1) {
-    const image = index === 0 ? firstImage : await loadImage(imageUrls[index]);
-    drawContainImage(image);
-    if (track && "requestFrame" in track) {
-      track.requestFrame();
+  let frameIndex = 0;
+  for (let repeat = 0; repeat < repeatCount; repeat += 1) {
+    for (let index = 0; index < imageUrls.length; index += 1) {
+      const image = index === 0 && repeat === 0 ? firstImage : await loadImage(imageUrls[index]);
+      drawContainImage(image);
+      if (track && "requestFrame" in track) {
+        track.requestFrame();
+      }
+      frameIndex += 1;
+      updateProgress(frameIndex / targetFps, duration);
+      await sleep(frameDurationMs);
     }
-    updateProgress((index + 1) / targetFps, duration);
-    await sleep(frameDurationMs);
   }
 
   recorder.stop();
@@ -608,8 +633,14 @@ fpsInput.addEventListener("input", () => {
   fpsValue.textContent = fpsInput.value;
   outputFileName = buildOutputFileName();
   if (sourceKind === "images") {
-    updateProgress(0, imageFiles.length / Number(fpsInput.value));
+    updateImageDurationPreview();
   }
+});
+
+repeatInput.addEventListener("input", () => {
+  repeatValue.textContent = repeatInput.value;
+  resetDownload();
+  updateImageDurationPreview();
 });
 
 qualityInput.addEventListener("change", () => {
