@@ -51,10 +51,22 @@ const mp4MimeTypes = [
   "video/mp4",
 ];
 
-const qualityNames = {
-  3500000: "标准",
-  6500000: "高清",
-  10000000: "超清",
+const qualityPresets = {
+  standard: {
+    label: "标准 · 720p",
+    maxSide: 1280,
+    videoBitsPerSecond: 3500000,
+  },
+  hd: {
+    label: "高清 · 1080p",
+    maxSide: 1920,
+    videoBitsPerSecond: 6500000,
+  },
+  ultra: {
+    label: "超清 · 1440p",
+    maxSide: 2560,
+    videoBitsPerSecond: 10000000,
+  },
 };
 
 const backgroundOptions = {
@@ -149,21 +161,38 @@ function updateProgress(current, duration) {
   progressBar.value = duration ? Math.min(current / duration, 1) : 0;
 }
 
+function getQualityPreset() {
+  return qualityPresets[qualityInput.value] || qualityPresets.hd;
+}
+
+function getVideoBitrate() {
+  return getQualityPreset().videoBitsPerSecond;
+}
+
+function getScaledSize(width, height) {
+  const sourceWidth = width || 1280;
+  const sourceHeight = height || 720;
+  const maxSide = getQualityPreset().maxSide;
+  const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
+  return {
+    width: Math.round(sourceWidth * scale),
+    height: Math.round(sourceHeight * scale),
+  };
+}
+
 function fitCanvasToVideo() {
-  const width = video.videoWidth || 1280;
-  const height = video.videoHeight || 720;
+  const size = getScaledSize(video.videoWidth, video.videoHeight);
+  const width = size.width;
+  const height = size.height;
   canvas.width = width;
   canvas.height = height;
   ctx.drawImage(video, 0, 0, width, height);
 }
 
 function setCanvasSize(width, height) {
-  const sourceWidth = width || 1280;
-  const sourceHeight = height || 720;
-  const maxSide = 1920;
-  const scale = Math.min(1, maxSide / Math.max(sourceWidth, sourceHeight));
-  canvas.width = Math.round(sourceWidth * scale);
-  canvas.height = Math.round(sourceHeight * scale);
+  const size = getScaledSize(width, height);
+  canvas.width = size.width;
+  canvas.height = size.height;
 }
 
 function drawContainImage(image) {
@@ -480,7 +509,7 @@ async function renderStopMotion() {
   showCanvasPreview();
   const targetFps = Number(fpsInput.value);
   const frameInterval = 1 / targetFps;
-  const videoBitsPerSecond = Number(qualityInput.value);
+  const videoBitsPerSecond = getVideoBitrate();
   const chunks = [];
   let nextFrameTime = 0;
   let rafId = 0;
@@ -644,7 +673,15 @@ repeatInput.addEventListener("input", () => {
 });
 
 qualityInput.addEventListener("change", () => {
-  qualityLabel.textContent = qualityNames[qualityInput.value] || "标准";
+  qualityLabel.textContent = getQualityPreset().label;
+  resetDownload();
+  if (sourceKind === "images") {
+    redrawImagePreview().catch((error) => {
+      setStatus(error.message || "照片读取失败");
+    });
+  } else if (sourceKind === "video" && video.readyState >= 2) {
+    fitCanvasToVideo();
+  }
 });
 
 backgroundInput.addEventListener("change", () => {

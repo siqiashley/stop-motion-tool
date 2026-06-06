@@ -413,6 +413,13 @@ select {
   background: transparent;
 }
 
+.control-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .result-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

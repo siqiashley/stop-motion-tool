@@ -120,13 +120,14 @@
           <div class="control-group">
             <div class="row-label">
               <span>输出质量</span>
-              <strong id="qualityLabel">标准</strong>
+              <strong id="qualityLabel">高清 · 1080p</strong>
             </div>
             <select id="qualityInput">
-              <option value="3500000">标准</option>
-              <option value="6500000">高清</option>
-              <option value="10000000">超清</option>
+              <option value="standard">标准 · 720p</option>
+              <option value="hd" selected>高清 · 1080p</option>
+              <option value="ultra">超清 · 1440p</option>
             </select>
+            <div class="control-note">按原比例输出，横屏 1080p 为 1920×1080，竖屏为 1080×1920。</div>
           </div>
 
           <button id="exportButton" class="primary-button" disabled>生成视频</button>
