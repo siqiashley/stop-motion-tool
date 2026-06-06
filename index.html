@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4-12 FPS Stop Motion Tool</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="mode-landing" id="modeLanding">
+        <div class="landing-copy">
+          <span class="empty-icon">▣</span>
+          <h1>4-12 FPS 逐格动画工具</h1>
+          <p>选择素材类型，然后生成一段 MP4 stop motion 影片。</p>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" type="button" data-mode="video">
+            <span class="mode-icon">▶</span>
+            <strong>视频变 Stop Motion</strong>
+            <span>上传一个视频，降到 4-12 FPS。</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="images">
+            <span class="mode-icon">▦</span>
+            <strong>照片变 Stop Motion</strong>
+            <span>上传多张照片，按顺序连成影片。</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="workspace hidden" id="toolWorkspace">
+        <div class="tool-topbar">
+          <button id="backButton" class="back-button" type="button" aria-label="返回选择模式">←</button>
+        </div>
+        <div class="preview-panel">
+          <canvas id="stage" class="preview-hidden" aria-label="逐格动画生成画布"></canvas>
+          <video id="previewVideo" class="preview-video hidden" controls playsinline></video>
+          <div class="empty-state" id="emptyState">
+            <span class="empty-icon">▣</span>
+            <h1>4-12 FPS 逐格动画工具</h1>
+            <p>上传视频或多张照片，选择目标帧率，导出带有逐格动画质感的 MP4。</p>
+          </div>
+        </div>
+
+        <aside class="control-panel">
+          <div class="mode-heading">
+            <span id="modeTitle">视频变 Stop Motion</span>
+            <strong>MP4</strong>
+          </div>
+          <label class="file-drop" for="videoInput" id="dropZone">
+            <input id="videoInput" type="file" accept="video/*" />
+            <span class="file-icon">＋</span>
+            <span class="file-text" id="fileText">选择视频</span>
+            <span class="file-hint" id="fileHint">MP4、MOV 等浏览器可播放格式</span>
+          </label>
+
+          <div class="control-group">
+            <div class="row-label">
+              <span>目标帧率</span>
+              <strong><span id="fpsValue">10</span> FPS</strong>
+            </div>
+            <input id="fpsInput" type="range" min="4" max="12" step="1" value="10" />
+            <div class="tick-row">
+              <span>4</span>
+              <span>5</span>
+              <span>6</span>
+              <span>7</span>
+              <span>8</span>
+              <span>9</span>
+              <span>10</span>
+              <span>11</span>
+              <span>12</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle-line">
+              <input id="previewInput" type="checkbox" checked />
+              <span>生成时预览</span>
+            </label>
+          </div>
+
+          <div class="control-group hidden" id="backgroundControl">
+            <div class="row-label">
+              <span>背景</span>
+              <strong class="color-preview">
+                <span id="backgroundSwatch" class="color-swatch"></span>
+                <span id="backgroundLabel">绿幕</span>
+                <span id="backgroundHex">#00FF00</span>
+              </strong>
+            </div>
+            <select id="backgroundInput">
+              <option value="green" selected>绿幕</option>
+              <option value="black">黑色</option>
+              <option value="white">白色</option>
+              <option value="blue">蓝幕</option>
+              <option value="custom">自定义</option>
+            </select>
+            <label class="color-line hidden" id="customColorLine">
+              <span>颜色</span>
+              <input id="customColorInput" type="color" value="#00ff00" />
+            </label>
+          </div>
+
+          <div class="control-group">
+            <div class="row-label">
+              <span>输出质量</span>
+              <strong id="qualityLabel">标准</strong>
+            </div>
+            <select id="qualityInput">
+              <option value="3500000">标准</option>
+              <option value="6500000">高清</option>
+              <option value="10000000">超清</option>
+            </select>
+          </div>
+
+          <button id="exportButton" class="primary-button" disabled>生成视频</button>
+          <div id="resultActions" class="result-actions hidden">
+            <button id="downloadButton" class="download-button" type="button">保存成品</button>
+            <a id="previewLink" class="secondary-button" target="_blank" rel="noopener">打开成品</a>
+          </div>
+
+          <div class="status-box">
+            <div class="status-line">
+              <span id="statusText">等待视频</span>
+              <span id="timeText">00:00 / 00:00</span>
+            </div>
+            <progress id="progressBar" value="0" max="1"></progress>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <video id="sourceVideo" playsinline muted hidden></video>
+    <script src="./script.js"></script>
+  </body>
+</html>
